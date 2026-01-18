@@ -1,20 +1,20 @@
-extends KinematicBody2D
+extends CharacterBody2D
 
 const EnemyDeathEffect          = preload("res://Effects/EnemyDeathEffect.tscn")
 const Drop                      = preload("res://World/Item.tscn")
 const Bee                       = preload("res://Enemies/Bee.tscn")
 
-export var ACCELERATION         = 300
-export var MAX_SPEED            = 75
-export var FRICTION             = 200
-export var WANDER_TARGET_RANGE  = 4
-export var HEALTH               = 50
+@export var ACCELERATION         = 300
+@export var MAX_SPEED            = 75
+@export var FRICTION             = 200
+@export var WANDER_TARGET_RANGE  = 4
+@export var HEALTH               = 50
 
-onready var playerDetectionZone = $PlayerDetectionZone
-onready var wanderController    = $WanderController
-onready var animationPlayer     = $AnimationPlayer
-onready var hurtbox             = $HurtBox
-onready var sprite              = $AnimatedSprite
+@onready var playerDetectionZone = $PlayerDetectionZone
+@onready var wanderController    = $WanderController
+@onready var animationPlayer     = $AnimationPlayer
+@onready var hurtbox             = $HurtBox
+@onready var sprite              = $AnimatedSprite2D
 
 var velocity                    = Vector2.ZERO
 var knockback                   = Vector2.ZERO
@@ -31,12 +31,14 @@ func _ready():
 	state = pick_random_state([IDLE, WANDER])
 
 	# warning-ignore:return_value_discarded
-	self.connect("boss_is_dead", get_parent().get_parent(), "drop_key")
+	self.connect("boss_is_dead", Callable(get_parent().get_parent(), "drop_key"))
 
 func _physics_process(delta):
 
 	knockback = knockback.move_toward(Vector2.ZERO, FRICTION * delta)
-	knockback = move_and_slide(knockback)
+	set_velocity(knockback)
+	move_and_slide()
+	knockback = velocity
 
 	match state:
 		
@@ -60,11 +62,13 @@ func _physics_process(delta):
 			else:
 				state = IDLE
 				
-	velocity = move_and_slide(velocity)
+	set_velocity(velocity)
+	move_and_slide()
+	velocity = velocity
 
 func update_wander():
 	state = pick_random_state([IDLE, WANDER])
-	wanderController.start_wander_timer(rand_range(1, 3))
+	wanderController.start_wander_timer(randf_range(1, 3))
 
 func accelerate_towards_point(point, delta):
 	var direction = global_position.direction_to(point)
@@ -86,7 +90,7 @@ func _on_HurtBox_area_entered(area):
 	if HEALTH <= 0:
 		dead = true
 		queue_free()
-		var enemyDeathEffect = EnemyDeathEffect.instance()
+		var enemyDeathEffect = EnemyDeathEffect.instantiate()
 		get_parent().add_child(enemyDeathEffect)
 		enemyDeathEffect.global_position = global_position
 
@@ -102,14 +106,14 @@ func _on_HurtBox_invincibility_ended():
 
 func _on_HurtBox_area_exited(_area):
 	if dead == true:
-		for x in rand_range(15,30):
-			var drop = Drop.instance()
+		for x in randf_range(15,30):
+			var drop = Drop.instantiate()
 			drop.type = 2
 			get_parent().add_child(drop)
-			drop.global_position = global_position + Vector2(rand_range(-16,16),rand_range(-16,16))
+			drop.global_position = global_position + Vector2(randf_range(-16,16),randf_range(-16,16))
 			emit_signal("boss_is_dead")
 
 func _on_Timer_timeout():
-	var bee = Bee.instance()
+	var bee = Bee.instantiate()
 	get_parent().add_child(bee)
 	bee.position = position

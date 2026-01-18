@@ -1,24 +1,23 @@
-extends KinematicBody2D
+extends CharacterBody2D
 
-onready var animationPlayer      = $AnimationPlayer
-onready var animationTree        = $AnimationTree
-onready var swordHitbox          = $HitBoxPivot/SwordHitBox
-onready var animationState       = animationTree.get("parameters/playback")
-onready var hurtbox              = $HurtBox
-onready var blinkAnimationPlayer = $BlinkAnimationPlayer
+@onready var animationPlayer      = $AnimationPlayer
+@onready var animationTree        = $AnimationTree
+@onready var swordHitbox          = $HitBoxPivot/SwordHitBox
+@onready var animationState       = animationTree.get("parameters/playback")
+@onready var hurtbox              = $HurtBox
+@onready var blinkAnimationPlayer = $BlinkAnimationPlayer
 
-onready var Player               = preload("res://Player/Unarmed.png")
-onready var Ledi                 = preload("res://Player/Ledi.png")
-onready var Lyu                  = preload("res://Player/Lyu.png")
-onready var Legan                = preload("res://Player/Legan.png")
-onready var Effect               = preload("res://Effects/EnemyDeathEffect.tscn")
+@onready var Player               = preload("res://Player/Unarmed.png")
+@onready var Ledi                 = preload("res://Player/Ledi.png")
+@onready var Lyu                  = preload("res://Player/Lyu.png")
+@onready var Legan                = preload("res://Player/Legan.png")
+@onready var Effect               = preload("res://Effects/EnemyDeathEffect.tscn")
 
 var ACCELERATION                 = 500
 var MAX_SPEED                    = 80
 var FRICTION                     = 500
 var ROLL_SPEED                   = 120
 
-var velocity                     = Vector2.ZERO
 var roll_vector                  = Vector2.DOWN
 var can_move                     = true 
 var can_attack                   = true 
@@ -37,23 +36,24 @@ func _ready():
 	randomize()
 #______________________________________ Connecting Signals ___
 # warning-ignore:return_value_discarded
-	Global.connect("no_health", self, "dying_state")
+	Global.no_health.connect(dying_state)
+	update_mana.connect(Global._on_update_status)
 # warning-ignore:return_value_discarded
-	self.connect("update_mana", Global, "_on_update_status")
+	self.connect("update_mana", Callable(Global, "_on_update_status"))
 
 ################################################# State Machine ###
-func _process(delta):
+func _physics_process(delta):
 
 	if can_move == true:
 		match state:
 			MOVE:
-					   move_state(delta)
+				move_state(delta)
 			ROLL:
-					   roll_state()
+				roll_state()
 			ATTACK:
-					   attack_state()
+				attack_state()
 			TRANSITION:
-					   transition_state()
+				transition_state()
 	_invisible()
 
 ###################################################### Movement ###
@@ -91,7 +91,7 @@ func move_state(delta):
 			_power()
 
 func move():
-	velocity = move_and_slide(velocity)
+	move_and_slide()
 
 ################################################# Roll & Attack ###
 func roll_state():
@@ -114,19 +114,19 @@ func attack_animation_finished():
 func transformation():
 
 	if Global.player == "Player":
-		$Sprite.texture    = Player
+		$Sprite2D.texture    = Player
 		swordHitbox.damage = 1
 
 	if Global.player == "Legan":
-		$Sprite.texture    = Legan
+		$Sprite2D.texture    = Legan
 		swordHitbox.damage = 2
 
 	if Global.player == "Ledi":
-		$Sprite.texture    = Ledi
+		$Sprite2D.texture    = Ledi
 		swordHitbox.damage = 4
 
 	if Global.player == "Lyu":
-		$Sprite.texture    = Lyu
+		$Sprite2D.texture    = Lyu
 		swordHitbox.damage = 6
 
 func smoke_effect():
@@ -160,7 +160,7 @@ func cut_left():
 	can_move = false
 	animationState.travel("Idle")
 	$AnimationPlayer.play("CutLeft")
-	yield($AnimationPlayer,"animation_finished")
+	await $AnimationPlayer.animation_finished
 	animationState.travel("Idle")
 	state = MOVE
 	can_move = true
@@ -169,7 +169,7 @@ func cut_right():
 	can_move = false
 	animationState.travel("Idle")
 	$AnimationPlayer.play("CutRight")
-	yield($AnimationPlayer,"animation_finished")
+	await $AnimationPlayer.animation_finished
 	animationState.travel("Idle")
 	state    = MOVE
 	can_move = true
@@ -178,7 +178,7 @@ func break_left():
 	can_move = false
 	animationState.travel("Idle")
 	$AnimationPlayer.play("BreakLeft")
-	yield($AnimationPlayer,"animation_finished")
+	await $AnimationPlayer.animation_finished
 	animationState.travel("Idle")
 	state    = MOVE
 	can_move = true
@@ -187,7 +187,7 @@ func break_right():
 	can_move = false
 	animationState.travel("Idle")
 	$AnimationPlayer.play("BreakRight")
-	yield($AnimationPlayer,"animation_finished")
+	await $AnimationPlayer.animation_finished
 	animationState.travel("Idle")
 	state    = MOVE
 	can_move = true
@@ -207,13 +207,13 @@ func dying_state():
 	animationPlayer.play("Dying")
 	Global.stop_music()
 	Global.death_play()
-	yield($AnimationPlayer, "animation_finished")
+	await $AnimationPlayer.animation_finished
 	Global.health = Global.max_health
 # warning-ignore:return_value_discarded
 	Global.from = null
 	Global.direction = Vector2.ZERO
-	yield(get_tree().create_timer(2),"timeout")
-	get_tree().change_scene("res://Levels/InsideHouse.tscn")
+	await get_tree().create_timer(2).timeout
+	get_tree().change_scene_to_file("res://Levels/InsideHouse.tscn")
 	Global.play_music()
 
 func _on_HurtBox_invincibility_started():

@@ -1,8 +1,8 @@
 extends Node
 
-export(int) var max_health = 5 setget set_max_health
-var health           = max_health setget set_health
-var health_bar       = 0 setget set_health_bar
+@export var max_health: int = 5: set = set_max_health
+var health           = max_health: set = set_health
+var health_bar       = 0: set = set_health_bar
 
 var direction        = Vector2.ZERO
 var player           = "Player"
@@ -83,7 +83,7 @@ func _on_reg_hp():
 	if health < max_health:
 		while health < max_health:
 			if health_bar < 100:
-				yield(get_tree().create_timer(1),"timeout")
+				await get_tree().create_timer(1).timeout
 				health_bar += 20
 				emit_signal("health_bar_size", health_bar)
 			else:
@@ -102,7 +102,7 @@ func _on_repellent():
 
 func _countdown():
 	while timer > 0:
-		yield(get_tree().create_timer(1 , false),"timeout")
+		await get_tree().create_timer(1 , false).timeout
 		timer -= 1
 		if repellent == true:
 			emit_signal("repellent_time")
@@ -161,19 +161,17 @@ func save_game():
 }
 
 #_________________________________________________________________
-	var file = File.new()
-	file.open("user://savegame.json", File.WRITE)
-	var json = to_json(data)
+	var file := FileAccess.open("user://savegame.json", FileAccess.WRITE)
+	var json := JSON.stringify(data)
 	file.store_line(json)
 	file.close()
 
 ######################################################### Load ###
 func load_game():
 
-	var file = File.new()
-	if file.file_exists("user://savegame.json"):
-		file.open("user://savegame.json", File.READ)
-		data = parse_json(file.get_as_text())
+	if FileAccess.file_exists("user://savegame.json"):
+		var file := FileAccess.open("user://savegame.json", FileAccess.READ)
+		data = JSON.parse_string(file.get_as_text())
 		file.close()
 #_________________________________________________________________
 		current_level    = data.current_level
@@ -184,7 +182,7 @@ func load_game():
 		chest            = data.chest
 		pickaxe_equipped = data.pickaxe_equipped
 		quest_status     = int(data.quest_status)
-		max_health       = data.max_health
+		max_health       = data.max_healthsss
 		health           = data.health
 		player           = data.player
 		visited          = data.visited
@@ -207,13 +205,13 @@ func load_game():
 #_________________________________________________________________
 		if not current_level in dangeons:
 			# warning-ignore:return_value_discarded
-			get_tree().change_scene("res://Levels/" + current_level + ".tscn")
+			get_tree().change_scene_to_file("res://Levels/" + current_level + ".tscn")
 		else:
 			stop_music()
 			current_level = "CaveLevel2"
 			from          = null
 			# warning-ignore:return_value_discarded
-			get_tree().change_scene("res://Levels/" + current_level + ".tscn")
+			get_tree().change_scene_to_file("res://Levels/" + current_level + ".tscn")
 			play_music()
 		get_tree().paused = false
 
@@ -251,4 +249,4 @@ func reset():
 	pickaxe          = "empty"
 #_________________________________________________________________
 	# warning-ignore:return_value_discarded
-	get_tree().change_scene("res://UI/FirstMenu.tscn")
+	get_tree().change_scene_to_file("res://UI/FirstMenu.tscn")

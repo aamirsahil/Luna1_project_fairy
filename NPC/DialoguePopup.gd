@@ -1,9 +1,9 @@
 extends Popup
 
 var npc
-var npc_name setget name_set
-var dialogue setget dialogue_set
-var answers setget answers_set
+var npc_name : set = name_set
+var dialogue : set = dialogue_set
+var answers : set = answers_set
 
 func _ready():
 	set_process_input(false)

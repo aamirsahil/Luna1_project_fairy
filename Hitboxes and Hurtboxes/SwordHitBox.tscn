@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Player/SwordHitBox.gd" type="Script" id=1]
-[ext_resource path="res://Player/Laduke.png" type="Texture" id=2]
+[ext_resource path="res://Player/Laduke.png" type="Texture2D" id=2]
 
 [sub_resource type="CapsuleShape2D" id=87]
 
@@ -47,7 +47,7 @@ disabled = true
 [node name="Node2d" type="Node2D" parent="Unarmed"]
 visible = false
 
-[node name="Ladu" type="AnimatedSprite" parent="Unarmed/Node2d"]
+[node name="Ladu" type="AnimatedSprite2D" parent="Unarmed/Node2d"]
 frames = SubResource( 92 )
 frame = 1
 playing = true

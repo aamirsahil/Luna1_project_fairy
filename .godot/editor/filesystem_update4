@@ -1,0 +1,7 @@
+res://default_env.tres
+res://UI/Intro.tscn
+res://Global.gd
+res://Player/Player.gd
+res://World/Item.gd
+res://UI/SleepPopup.gd
+res://Enemies/Enemy.gd
